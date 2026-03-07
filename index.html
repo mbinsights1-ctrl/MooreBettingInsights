@@ -300,6 +300,106 @@ td.game-cell{max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:
   color:#ffffff !important;
 }
 
+
+
+/* MOBILE / TABLET RESPONSIVE IMPROVEMENTS */
+@media (max-width: 900px){
+  .page{padding:0 16px 64px;}
+  .header{padding-top:20px;margin-bottom:28px;}
+  .header-logo{max-width:320px;}
+  .section-header{margin-top:36px;margin-bottom:14px;gap:10px;}
+  .section-title{font-size:12px;letter-spacing:0.12em;}
+  .hero-note{margin:-10px 0 24px;font-size:10px;letter-spacing:0.06em;}
+  .hero-note span{padding:7px 10px;gap:6px;}
+
+  .hero-grid{gap:12px;}
+  .hero-card{padding:18px 14px;border-radius:12px;}
+  .hero-value{font-size:24px;}
+  .hero-label{font-size:9px;}
+  .hero-sub{font-size:10px;}
+
+  .period-grid{gap:12px;}
+  .period-card{padding:15px 14px;border-radius:12px;}
+  .period-record{font-size:20px;}
+  .period-stats{gap:10px;flex-wrap:wrap;}
+
+  .table-card{border-radius:12px;}
+  th, td{padding:10px 12px;}
+
+  .matrix-wrap,
+  .picks-scroll{
+    overflow-x:auto;
+    -webkit-overflow-scrolling:touch;
+    scrollbar-width:thin;
+    padding-bottom:4px;
+  }
+
+  .matrix-table{min-width:840px;}
+  .matrix-table th{padding:10px 12px;font-size:9px;}
+  .matrix-table td{padding:10px 12px;}
+  .matrix-table th.row-header{min-width:92px;position:sticky;left:0;z-index:3;}
+  .matrix-table td.row-label{min-width:92px;position:sticky;left:0;z-index:2;box-shadow:8px 0 18px rgba(8,12,46,0.35);}
+  .matrix-cell{min-width:78px;gap:3px;}
+  .mc-record{font-size:13px;}
+  .mc-units{font-size:10px;}
+  .mc-roi{font-size:9px;}
+
+  .picks-scroll table{min-width:760px;}
+  td.game-cell{max-width:150px;}
+
+  .footer{margin-top:36px;padding-top:16px;}
+}
+
+@media (max-width: 640px){
+  .page{padding:0 12px 56px;}
+  .header{padding-top:16px;margin-bottom:22px;}
+  .header-logo{max-width:260px;}
+
+  .hero-grid{
+    grid-template-columns:repeat(3, minmax(0, 1fr));
+    gap:8px;
+    margin-bottom:24px;
+  }
+  .hero-card{padding:14px 10px;}
+  .hero-value{font-size:18px;line-height:1;}
+  .hero-label{font-size:8px;letter-spacing:0.1em;}
+  .hero-sub{font-size:9px;line-height:1.2;}
+
+  .hero-note{margin:-4px 0 18px;font-size:9px;}
+  .hero-note span{padding:6px 9px;}
+
+  .section-header{margin-top:30px;padding-bottom:8px;}
+  .section-title{font-size:11px;}
+  .section-badge{font-size:9px;padding:3px 7px;}
+
+  .period-grid{grid-template-columns:repeat(3, minmax(0, 1fr));gap:8px;}
+  .period-card{padding:12px 10px;}
+  .period-label{font-size:8px;letter-spacing:0.1em;margin-bottom:8px;}
+  .period-record{font-size:17px;margin-bottom:4px;}
+  .period-stats{display:grid;grid-template-columns:1fr;gap:6px;margin-top:8px;}
+  .period-stat{font-size:10px;}
+  .period-stat-label{font-size:8px;}
+
+  th, td{padding:9px 10px;font-size:12px;}
+  .pill{padding:3px 8px;font-size:11px;}
+
+  .matrix-table{min-width:720px;}
+  .matrix-table th{padding:9px 10px;font-size:8px;letter-spacing:0.1em;}
+  .matrix-table td{padding:9px 10px;}
+  .matrix-table th.row-header,
+  .matrix-table td.row-label{min-width:78px;}
+  .matrix-table td.row-label{font-size:9px;letter-spacing:0.08em;}
+  .matrix-cell{min-width:66px;}
+  .mc-record{font-size:12px;}
+  .mc-units{font-size:9px;}
+  .mc-roi{font-size:8px;}
+
+  .picks-scroll table{min-width:680px;}
+  td.game-cell{max-width:120px;}
+
+  .footer-refresh{font-size:10px;}
+}
+
 </style>
 </head>
 <body>
