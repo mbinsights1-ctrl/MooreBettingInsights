@@ -785,25 +785,6 @@ function renderDashboard(stats) {
 
   html += `</tbody></table></div></div>`;
 
-  html += `<div class="mobile-only"><div class="compact-matrix-list">`;
-  [...stats.allSports, 'TOTAL'].forEach(sport => {
-    const isTotal = sport === 'TOTAL';
-    const mktData = isTotal ? stats.byMarket : (stats.bySportMarket[sport] || {});
-    const overall = isTotal
-      ? {wins:stats.wins, losses:stats.losses, pushes:stats.pushes, units:stats.units}
-      : stats.bySport[sport];
-    html += `<div class="compact-matrix-card">
-      <div class="compact-matrix-head">
-        <div class="compact-matrix-title">${sport}</div>
-      </div>
-      <div class="compact-matrix-grid">`;
-    html += renderCompactMatrixStat('Overall', overall);
-    stats.allMkts.forEach(m => {
-      html += renderCompactMatrixStat(m.charAt(0).toUpperCase()+m.slice(1), mktData[m]);
-    });
-    html += `</div></div>`;
-  });
-  html += `</div></div>`;
 
   // ── RECENT PICKS SECTION ──
   html += `<div class="section-header" style="margin-top:44px;">
@@ -817,6 +798,7 @@ function renderDashboard(stats) {
   html += renderPeriodCard('Last 15 Days', stats.last15, 'pc-15');
   html += renderPeriodCard('Last 30 Days', stats.last30, 'pc-30');
   html += `</div>`;
+  html += `<div class="recent-picks-note">Last 30 Picks</div>`;
 
   // Picks table
   html += `<div class="table-card desktop-only"><div class="picks-scroll"><table>
