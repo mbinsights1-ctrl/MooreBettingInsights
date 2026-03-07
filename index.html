@@ -402,6 +402,93 @@ td.game-cell{max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:
   .footer-refresh{font-size:10px;}
 }
 
+
+
+/* MOBILE-ONLY ALTERNATE LAYOUTS */
+.mobile-only{display:none;}
+.desktop-only{display:block;}
+.compact-matrix-list{display:grid;gap:10px;}
+.compact-matrix-card{
+  background:rgba(13,18,64,0.62);
+  border:1px solid rgba(80,150,255,0.14);
+  border-radius:12px;
+  padding:12px;
+}
+.compact-matrix-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  margin-bottom:10px;
+}
+.compact-matrix-title{
+  font-family:'DM Mono',monospace;
+  font-size:11px;
+  letter-spacing:0.12em;
+  text-transform:uppercase;
+  color:#eef2ff;
+}
+.compact-matrix-grid{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:8px;
+}
+.compact-stat{
+  background:rgba(255,255,255,0.03);
+  border:1px solid rgba(120,138,255,0.12);
+  border-radius:10px;
+  padding:8px 6px;
+  text-align:center;
+}
+.compact-stat-label{
+  display:block;
+  font-family:'DM Mono',monospace;
+  font-size:8px;
+  letter-spacing:0.10em;
+  text-transform:uppercase;
+  color:var(--muted);
+  margin-bottom:4px;
+}
+.compact-stat .mc-record{font-size:12px;display:block;}
+.compact-stat .mc-units{font-size:9px;display:block;}
+.compact-stat .mc-roi{font-size:8px;display:block;}
+.mobile-picks-list{display:grid;gap:10px;}
+.mobile-pick-card{
+  background:rgba(13,18,64,0.62);
+  border:1px solid rgba(80,150,255,0.14);
+  border-radius:12px;
+  padding:12px;
+}
+.mobile-pick-top,
+.mobile-pick-bottom{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+}
+.mobile-pick-top{margin-bottom:8px;flex-wrap:wrap;}
+.mobile-pick-meta{display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+.mobile-pick-date{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);}
+.mobile-pick-game{font-size:13px;font-weight:600;line-height:1.3;color:var(--text);margin-bottom:6px;}
+.mobile-pick-play{font-size:12px;line-height:1.35;color:var(--dim);margin-bottom:8px;}
+.mobile-pick-bottom{font-family:'DM Mono',monospace;font-size:11px;flex-wrap:wrap;}
+.mobile-pick-bottom-left{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+@media (max-width: 640px){
+  .desktop-only{display:none !important;}
+  .mobile-only{display:block;}
+  .matrix-wrap{overflow:visible;padding-bottom:0;}
+  .matrix-table{min-width:0;table-layout:fixed;width:100%;}
+  .matrix-table th,.matrix-table td{padding:6px 4px;}
+  .matrix-table th,.matrix-table td.row-label{font-size:7px;letter-spacing:0.06em;}
+  .matrix-table th.row-header,.matrix-table td.row-label{min-width:0;position:static;box-shadow:none;}
+  .matrix-cell{min-width:auto;gap:2px;}
+  .mc-record{font-size:10px;}
+  .mc-units{font-size:8px;}
+  .mc-roi{font-size:7px;}
+  .picks-scroll{overflow:visible;}
+  .picks-scroll table{min-width:0;width:100%;}
+}
+
 </style>
 </head>
 <body>
@@ -604,6 +691,25 @@ function renderPeriodCard(label, s, colorClass) {
   </div>`;
 }
 
+
+function renderCompactMatrixStat(label, data) {
+  if (!data) {
+    return `<div class="compact-stat"><span class="compact-stat-label">${label}</span><span class="mc-empty">—</span></div>`;
+  }
+  const roi = (data.wins + data.losses + data.pushes) > 0 ? (data.units / (data.wins + data.losses + data.pushes) * 100) : 0;
+  const uSign = data.units >= 0 ? '+' : '';
+  const uCls  = data.units >= 0 ? 'val-green' : 'val-red';
+  const rSign = roi >= 0 ? '+' : '';
+  const rCls  = roi >= 0 ? 'val-green' : 'val-red';
+  const record = `${data.wins}-${data.losses}${data.pushes > 0 ? `-${data.pushes}` : ''}`;
+  return `<div class="compact-stat">
+    <span class="compact-stat-label">${label}</span>
+    <span class="mc-record">${record}</span>
+    <span class="mc-units ${uCls}">${uSign}${data.units.toFixed(1)}u</span>
+    <span class="mc-roi ${rCls}">${rSign}${roi.toFixed(1)}%</span>
+  </div>`;
+}
+
 function renderDashboard(stats) {
   const unitsSign = stats.units >= 0 ? '+' : '';
   const roiSign   = stats.roi   >= 0 ? '+' : '';
@@ -679,6 +785,26 @@ function renderDashboard(stats) {
 
   html += `</tbody></table></div></div>`;
 
+  html += `<div class="mobile-only"><div class="compact-matrix-list">`;
+  [...stats.allSports, 'TOTAL'].forEach(sport => {
+    const isTotal = sport === 'TOTAL';
+    const mktData = isTotal ? stats.byMarket : (stats.bySportMarket[sport] || {});
+    const overall = isTotal
+      ? {wins:stats.wins, losses:stats.losses, pushes:stats.pushes, units:stats.units}
+      : stats.bySport[sport];
+    html += `<div class="compact-matrix-card">
+      <div class="compact-matrix-head">
+        <div class="compact-matrix-title">${sport}</div>
+      </div>
+      <div class="compact-matrix-grid">`;
+    html += renderCompactMatrixStat('Overall', overall);
+    stats.allMkts.forEach(m => {
+      html += renderCompactMatrixStat(m.charAt(0).toUpperCase()+m.slice(1), mktData[m]);
+    });
+    html += `</div></div>`;
+  });
+  html += `</div></div>`;
+
   // ── RECENT PICKS SECTION ──
   html += `<div class="section-header" style="margin-top:44px;">
     <span class="section-icon">📋</span>
@@ -693,7 +819,7 @@ function renderDashboard(stats) {
   html += `</div>`;
 
   // Picks table
-  html += `<div class="table-card"><div class="picks-scroll"><table>
+  html += `<div class="table-card desktop-only"><div class="picks-scroll"><table>
     <thead><tr>
       <th>Date</th>
       <th>Sport</th>
@@ -732,6 +858,43 @@ function renderDashboard(stats) {
   });
 
   html += `</tbody></table></div></div>`;
+
+  html += `<div class="mobile-only"><div class="mobile-picks-list">`;
+  stats.recent.forEach(p => {
+    const date = p['Date'] || '';
+    const shortDate = date.length >= 10 ? date.substring(5) : date;
+    const sport  = p['Sport']  || '';
+    const game   = cleanGameField(p['Game'] || '');
+    const market = p['Market'] || '';
+    const pick   = p['Pick']   || '';
+    const odds   = fmtOddsValue(p['Odds'] || '');
+    const result = p['Result'] || '';
+    const profit = parseFloat(p['Profit']);
+    const profitStr = isNaN(profit) ? '-' : (profit >= 0 ? '+'+profit.toFixed(2) : profit.toFixed(2));
+    const resultClass = result==='W' ? 'result-w' : result==='L' ? 'result-l' : '';
+    const profitClass = profit >= 0 ? 'profit-pos' : 'profit-neg';
+    const sportPill = sport==='NBA' ? 'pill-blue' : sport==='NCAAB' ? 'pill-gold' : 'pill-green';
+    const mktPill  = market==='total' ? 'pill-teal' : market==='spread' ? 'pill-blue' : market==='moneyline' ? 'pill-purple' : 'pill-gray';
+    html += `<div class="mobile-pick-card">
+      <div class="mobile-pick-top">
+        <div class="mobile-pick-meta">
+          <span class="mobile-pick-date">${shortDate}</span>
+          <span class="pill ${sportPill}" style="font-size:10px;">${sport}</span>
+          <span class="pill ${mktPill}" style="font-size:10px;">${market}</span>
+        </div>
+      </div>
+      <div class="mobile-pick-game" title="${game}">${game}</div>
+      <div class="mobile-pick-play" title="${pick}">${pick}</div>
+      <div class="mobile-pick-bottom">
+        <div class="mobile-pick-bottom-left">
+          <span>${odds}</span>
+          <span class="${resultClass}">${result}</span>
+        </div>
+        <div class="${profitClass}">${profitStr}u</div>
+      </div>
+    </div>`;
+  });
+  html += `</div></div>`;
   return html;
 }
 
