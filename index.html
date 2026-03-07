@@ -489,6 +489,8 @@ td.game-cell{max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:
   .picks-scroll table{min-width:0;width:100%;}
 }
 
+
+.matrix-table td, .matrix-table th{font-variant-numeric:tabular-nums;text-align:center;vertical-align:middle;}
 </style>
 </head>
 <body>
@@ -663,8 +665,8 @@ function renderMatrixCell(data) {
   return `<td>
     <div class="matrix-cell">
       <span class="mc-record">${record}</span>
-      <span class="mc-units ${uCls}">${uSign}${data.units.toFixed(1)}u</span>
-      <span class="mc-roi ${rCls}">${rSign}${roi.toFixed(1)}% ROI</span>
+      <span class="mc-units ${uCls}">${uSign}${data.units.toFixed(2)}u</span>
+      <span class="mc-roi ${rCls}">${rSign}${roi.toFixed(2)}% ROI</span>
     </div>
   </td>`;
 }
@@ -705,8 +707,8 @@ function renderCompactMatrixStat(label, data) {
   return `<div class="compact-stat">
     <span class="compact-stat-label">${label}</span>
     <span class="mc-record">${record}</span>
-    <span class="mc-units ${uCls}">${uSign}${data.units.toFixed(1)}u</span>
-    <span class="mc-roi ${rCls}">${rSign}${roi.toFixed(1)}%</span>
+    <span class="mc-units ${uCls}">${uSign}${data.units.toFixed(2)}u</span>
+    <span class="mc-roi ${rCls}">${rSign}${roi.toFixed(2)}%</span>
   </div>`;
 }
 
@@ -729,8 +731,8 @@ function renderDashboard(stats) {
     </div>
     <div class="hero-card hc-gold">
       <div class="hero-label">ROI</div>
-      <div class="hero-value ${roiClass(stats.roi)}">${roiSign}${stats.roi.toFixed(1)}%</div>
-      <div class="hero-sub">per 1 unit wagered</div>
+      <div class="hero-value ${roiClass(stats.roi)}">${roiSign}${stats.roi.toFixed(2)}%</div>
+      <div class="hero-sub">per 1 unit</div>
     </div>
   </div>`;
   html += `<div class="hero-note"><span>Tracking results since January 2026</span></div>`;
@@ -798,7 +800,7 @@ function renderDashboard(stats) {
   html += renderPeriodCard('Last 15 Days', stats.last15, 'pc-15');
   html += renderPeriodCard('Last 30 Days', stats.last30, 'pc-30');
   html += `</div>`;
-  html += `<div class="recent-picks-note">Last 30 Picks</div>`;
+  html += `<div class="recent-picks-note"><span class="section-badge badge-blue">Last 30 Picks</span></div>`;
 
   // Picks table
   html += `<div class="table-card desktop-only"><div class="picks-scroll"><table>
