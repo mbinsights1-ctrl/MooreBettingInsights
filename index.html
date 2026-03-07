@@ -178,7 +178,7 @@ th.c,td.c{text-align:center;}
 .matrix-table td.row-label{
   font-family:'DM Mono',monospace;
   font-weight:500;
-  font-size:11px;
+  font-size:10px;
   letter-spacing:0.14em;
   text-transform:uppercase;
   text-align:center;
@@ -334,8 +334,9 @@ td.game-cell{max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:
     padding-bottom:4px;
   }
 
-  .matrix-table{min-width:840px;}
-  .matrix-table th{padding:10px 12px;font-size:9px;}
+  .matrix-table{min-width:620px;}
+  .matrix-table th,
+  .matrix-table td.row-label{padding:10px 12px;font-size:9px;}
   .matrix-table td{padding:10px 12px;}
   .matrix-table th.row-header{min-width:92px;position:sticky;left:0;z-index:3;}
   .matrix-table td.row-label{min-width:92px;position:sticky;left:0;z-index:2;box-shadow:8px 0 18px rgba(8,12,46,0.35);}
@@ -383,12 +384,13 @@ td.game-cell{max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:
   th, td{padding:9px 10px;font-size:12px;}
   .pill{padding:3px 8px;font-size:11px;}
 
-  .matrix-table{min-width:720px;}
-  .matrix-table th{padding:9px 10px;font-size:8px;letter-spacing:0.1em;}
+  .matrix-table{min-width:560px;}
+  .matrix-table th,
+  .matrix-table td.row-label{padding:9px 10px;font-size:8px;letter-spacing:0.1em;}
   .matrix-table td{padding:9px 10px;}
   .matrix-table th.row-header,
   .matrix-table td.row-label{min-width:78px;}
-  .matrix-table td.row-label{font-size:9px;letter-spacing:0.08em;}
+  .matrix-table td.row-label{letter-spacing:0.1em;}
   .matrix-cell{min-width:66px;}
   .mc-record{font-size:12px;}
   .mc-units{font-size:9px;}
@@ -491,16 +493,14 @@ function calcBasicStats(picks) {
 
 function computeStats(picks) {
   const base = calcBasicStats(picks);
-  const stats = { ...base, bySport:{}, byTier:{}, byMarket:{}, bySportTierMkt:{} };
+  const stats = { ...base, bySport:{}, byMarket:{}, bySportMarket:{} };
 
   const sportOrder = ['NBA','NCAAB','MLB'];
-  const tierOrder  = ['PREMIUM','STRONG','VALUE DOG'];
   const mktOrder   = ['spread','total','moneyline'];
 
   picks.forEach(p => {
     const profit = parseFloat(p['Profit']) || 0;
     const sport  = p['Sport']  || 'Other';
-    const tier   = p['Tier']   || 'Other';
     const market = p['Market'] || 'Other';
     const res    = p['Result'];
 
@@ -512,18 +512,14 @@ function computeStats(picks) {
       else obj[key].pushes++;
     };
     bump(stats.bySport, sport);
-    bump(stats.byTier, tier);
     bump(stats.byMarket, market);
 
-    // Sport x (Tier + Market) matrix
-    if (!stats.bySportTierMkt[sport]) stats.bySportTierMkt[sport] = {};
-    bump(stats.bySportTierMkt[sport], tier);
-    if (!stats.bySportTierMkt[sport+'__MKT__']) stats.bySportTierMkt[sport+'__MKT__'] = {};
-    bump(stats.bySportTierMkt[sport+'__MKT__'], market);
+    // Sport x Market matrix
+    if (!stats.bySportMarket[sport]) stats.bySportMarket[sport] = {};
+    bump(stats.bySportMarket[sport], market);
   });
 
   stats.allSports = [...new Set([...sportOrder, ...Object.keys(stats.bySport)])].filter(s => stats.bySport[s]);
-  stats.allTiers  = [...new Set([...tierOrder,  ...Object.keys(stats.byTier)])].filter(t => stats.byTier[t]);
   stats.allMkts   = [...new Set([...mktOrder,   ...Object.keys(stats.byMarket)])].filter(m => stats.byMarket[m]);
 
   stats.recent = picks.slice(-30).reverse();
@@ -637,28 +633,21 @@ function renderDashboard(stats) {
   html += `<div class="section-header">
     <span class="section-icon">📈</span>
     <span class="section-title">Breakdown</span>
-    <span class="section-badge badge-blue">Sport × Tier & Market</span>
+    <span class="section-badge badge-blue">Sport × Market</span>
   </div>`;
 
   html += `<div class="table-card"><div class="matrix-wrap"><table class="matrix-table">`;
 
-  // Header row — Total | Tier group | Market group
-  const numTiers = stats.allTiers.length;
+  // Header row — Overall | Market group
   const numMkts  = stats.allMkts.length;
   html += `<thead>
     <tr>
       <th class="row-header" rowspan="2">Sport</th>
       <th colspan="1" class="col-group-header col-divider">Overall</th>
-      <th colspan="${numTiers}" class="col-group-header col-divider">Tier</th>
       <th colspan="${numMkts}" class="col-group-header col-divider">Market</th>
     </tr>
     <tr>
-      <th class="col-divider">Total</th>`;
-  stats.allTiers.forEach((t, i) => {
-    const pillCls = t==='PREMIUM'?'val-gold':t==='STRONG'?'val-blue':t==='VALUE DOG'?'val-gold':'';
-    const divClass = i===0 ? 'col-divider' : '';
-    html += `<th class="${divClass}"><span class="${pillCls}">${t}</span></th>`;
-  });
+      <th class="col-divider">Overall</th>`;
   stats.allMkts.forEach((m, i) => {
     const divClass = i===0 ? 'col-divider' : '';
     html += `<th class="${divClass}">${m.charAt(0).toUpperCase()+m.slice(1)}</th>`;
@@ -667,18 +656,10 @@ function renderDashboard(stats) {
 
   // Data rows — one per sport
   stats.allSports.forEach(sport => {
-    const tierData = stats.bySportTierMkt[sport] || {};
-    const mktData  = stats.bySportTierMkt[sport+'__MKT__'] || {};
+    const mktData  = stats.bySportMarket[sport] || {};
     html += `<tr><td class="row-label">${sport}</td>`;
-    // Overall total for this sport
     const sportCell = renderMatrixCell(stats.bySport[sport]);
     html += sportCell.replace('<td>', '<td class="col-divider">');
-    // Tier columns
-    stats.allTiers.forEach((t, i) => {
-      const cellHtml = renderMatrixCell(tierData[t]);
-      html += i===0 ? cellHtml.replace('<td>', '<td class="col-divider">') : cellHtml;
-    });
-    // Market columns
     stats.allMkts.forEach((m, i) => {
       const cellHtml = renderMatrixCell(mktData[m]);
       html += i===0 ? cellHtml.replace('<td>', '<td class="col-divider">') : cellHtml;
@@ -688,13 +669,8 @@ function renderDashboard(stats) {
 
   // Totals row
   html += `<tr style="background:var(--bg3);"><td class="row-label" style="color:#d9e1ff;">TOTAL</td>`;
-  // Overall total cell
   const overallCell = renderMatrixCell({wins:stats.wins, losses:stats.losses, pushes:stats.pushes, units:stats.units});
   html += overallCell.replace('<td>', '<td class="col-divider">');
-  stats.allTiers.forEach((t, i) => {
-    const cellHtml = renderMatrixCell(stats.byTier[t]);
-    html += i===0 ? cellHtml.replace('<td>', '<td class="col-divider">') : cellHtml;
-  });
   stats.allMkts.forEach((m, i) => {
     const cellHtml = renderMatrixCell(stats.byMarket[m]);
     html += i===0 ? cellHtml.replace('<td>', '<td class="col-divider">') : cellHtml;
@@ -722,7 +698,6 @@ function renderDashboard(stats) {
       <th>Date</th>
       <th>Sport</th>
       <th>Game</th>
-      <th>Tier</th>
       <th>Market</th>
       <th>Pick</th>
       <th class="r">Odds</th>
@@ -735,7 +710,6 @@ function renderDashboard(stats) {
     const shortDate = date.length >= 10 ? date.substring(5) : date;
     const sport  = p['Sport']  || '';
     const game   = cleanGameField(p['Game'] || '');
-    const tier   = p['Tier']   || '';
     const market = p['Market'] || '';
     const pick   = p['Pick']   || '';
     const odds   = fmtOddsValue(p['Odds'] || '');
@@ -744,13 +718,11 @@ function renderDashboard(stats) {
     const profitStr = isNaN(profit) ? '-' : (profit >= 0 ? '+'+profit.toFixed(2) : profit.toFixed(2));
     const resultClass = result==='W' ? 'result-w' : result==='L' ? 'result-l' : '';
     const profitClass = profit >= 0 ? 'profit-pos' : 'profit-neg';
-    const tierPill = tier==='PREMIUM' ? 'pill-gold' : tier==='STRONG' ? 'pill-blue' : tier==='VALUE DOG' ? 'pill-purple' : 'pill-gray';
     const mktPill  = market==='total' ? 'pill-teal' : market==='spread' ? 'pill-blue' : market==='moneyline' ? 'pill-purple' : 'pill-gray';
     html += `<tr>
       <td style="font-family:'DM Mono',monospace;font-size:12px;color:var(--muted);white-space:nowrap;">${shortDate}</td>
       <td><span class="pill ${sport==='NBA'?'pill-blue':sport==='NCAAB'?'pill-gold':'pill-green'}" style="font-size:10px;">${sport}</span></td>
       <td class="game-cell" title="${game}">${game}</td>
-      <td><span class="pill ${tierPill}" style="font-size:10px;">${tier}</span></td>
       <td><span class="pill ${mktPill}" style="font-size:10px;">${market}</span></td>
       <td style="font-size:12px;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${pick}">${pick}</td>
       <td class="r" style="font-family:'DM Mono',monospace;font-size:12px;">${odds}</td>
