@@ -958,15 +958,51 @@ function computeStats(picks) {
 
   stats.recent = picks.slice(-30).reverse();
 
-  // Period stats
-  stats.last7  = sliceStats(picks, 7);
-  stats.last15 = sliceStats(picks, 15);
-  stats.last30 = sliceStats(picks, 30);
-
-  // Daily profit time series (sorted ascending by date, with cumulative running total)
+  // Daily profit time series (sorted ascending by date, with cumulative running total).
+  // Built first because the period cards below derive their stats from it,
+  // ensuring the cards and the chart agree exactly for any same-named window.
   stats.dailyProfits = buildDailyProfitSeries(picks);
 
+  // Period stats — computed from the daily series so they share one source
+  // of truth with the chart. "Last N days" = the N calendar days ending at
+  // *yesterday* (the most recent day with finalized results), matching the
+  // chart's 7D / 15D / 30D presets exactly.
+  stats.last7  = aggregateDays(stats.dailyProfits, 7);
+  stats.last15 = aggregateDays(stats.dailyProfits, 15);
+  stats.last30 = aggregateDays(stats.dailyProfits, 30);
+
   return stats;
+}
+
+// Sum the last N days of finalized results from a dailyProfits array.
+// Returns the same shape as calcBasicStats for drop-in use by renderPeriodCard.
+// "Last N days" is anchored at yesterday because today's picks aren't booked
+// yet (they have empty Result fields and are filtered out of the parsed series
+// upstream). Within those N days we sum any actual entries — days with no
+// picks simply contribute zero, which is correct.
+function aggregateDays(dailySeries, days) {
+  const today = new Date();
+  // Window = [yesterday - (days - 1) .. yesterday], inclusive on both ends.
+  // Constructing both bounds from today's Y/M/D and stepping back the right
+  // number of days lets the JS Date constructor handle month/year rollover.
+  // This window definition matches the chart's onPresetClick exactly.
+  const endMs = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 1).getTime();
+  const startMs = new Date(today.getFullYear(), today.getMonth(), today.getDate() - days).getTime();
+  let wins = 0, losses = 0, pushes = 0, units = 0;
+  dailySeries.forEach(d => {
+    const ms = d.dateObj.getTime();
+    if (ms >= startMs && ms <= endMs) {
+      wins += d.wins;
+      losses += d.losses;
+      pushes += d.pushes;
+      units += d.profit;
+    }
+  });
+  const total = wins + losses;
+  const winPct = total > 0 ? (wins / total * 100) : 0;
+  const totalPicks = wins + losses + pushes;
+  const roi = totalPicks > 0 ? (units / totalPicks * 100) : 0;
+  return { wins, losses, pushes, units, winPct, roi, total: totalPicks };
 }
 
 // Build a sorted, day-by-day profit series. Each entry holds the calendar date,
@@ -1632,8 +1668,12 @@ function onPresetClick(preset) {
   if (preset === 'all') {
     startMs = chartState.domainMin;
   } else {
+    // "Last N days" = the N calendar days ending at the domain max
+    // (yesterday). To get N inclusive days we step back N-1 days from the
+    // end. This matches aggregateDays() so the chart and period cards always
+    // show identical numbers for the same-named window.
     const days = parseInt(preset, 10);
-    startMs = Math.max(chartState.domainMin, endMs - days * 86400000);
+    startMs = Math.max(chartState.domainMin, endMs - (days - 1) * 86400000);
   }
   chartState.startMs = startMs;
   chartState.endMs = endMs;
