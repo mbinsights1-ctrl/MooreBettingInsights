@@ -531,6 +531,285 @@ td.game-cell{max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:
 
 
 .matrix-table td, .matrix-table th{text-align:center;vertical-align:middle;}
+
+/* PROFIT CHART */
+.chart-card{
+  background:rgba(13,18,64,0.65);
+  backdrop-filter:blur(12px);
+  -webkit-backdrop-filter:blur(12px);
+  border:1px solid rgba(30,40,96,0.6);
+  border-radius:14px;
+  padding:20px 22px 18px;
+  margin-bottom:20px;
+  position:relative;
+  overflow:hidden;
+  animation:fadeUp 0.5s ease both;
+}
+.chart-card::before{
+  content:'';
+  position:absolute;
+  top:0;left:0;right:0;
+  height:2px;
+  background:linear-gradient(90deg,transparent,var(--strong),var(--gold),transparent);
+}
+.chart-header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  flex-wrap:wrap;
+  gap:10px;
+  margin-bottom:14px;
+}
+.chart-title{
+  font-family:'DM Mono',monospace;
+  font-size:11px;
+  letter-spacing:0.12em;
+  text-transform:uppercase;
+  color:var(--dim);
+}
+.chart-summary{
+  display:flex;
+  gap:14px;
+  align-items:center;
+  font-family:'DM Mono',monospace;
+  font-size:11px;
+  flex-wrap:wrap;
+}
+.chart-summary-item{display:flex;align-items:center;gap:6px;}
+.chart-summary-label{color:var(--muted);font-size:10px;letter-spacing:0.08em;text-transform:uppercase;}
+.chart-summary-val{font-weight:500;}
+.chart-svg-wrap{
+  width:100%;
+  position:relative;
+}
+.chart-svg{
+  width:100%;
+  height:auto;
+  display:block;
+  overflow:visible;
+}
+.chart-grid-line{stroke:rgba(120,138,255,0.10);stroke-width:1;}
+.chart-axis-line{stroke:rgba(120,138,255,0.25);stroke-width:1;}
+.chart-zero-line{stroke:rgba(160,176,255,0.30);stroke-width:1;stroke-dasharray:3 3;}
+.chart-axis-label{
+  font-family:'DM Mono',monospace;
+  font-size:10px;
+  fill:var(--muted);
+  letter-spacing:0.04em;
+}
+.chart-area-pos{fill:rgba(74,222,128,0.12);}
+.chart-area-neg{fill:rgba(248,113,113,0.12);}
+.chart-line{
+  fill:none;
+  stroke:url(#chartLineGradient);
+  stroke-width:2;
+  stroke-linejoin:round;
+  stroke-linecap:round;
+}
+.chart-dot{
+  fill:var(--bg);
+  stroke:var(--strong);
+  stroke-width:1.5;
+  cursor:pointer;
+  transition:r 0.15s ease;
+}
+.chart-dot:hover{r:5;}
+.chart-hover-line{stroke:rgba(160,176,255,0.45);stroke-width:1;stroke-dasharray:3 3;pointer-events:none;}
+.chart-tooltip{
+  position:absolute;
+  pointer-events:none;
+  background:rgba(13,18,64,0.96);
+  border:1px solid rgba(80,150,255,0.35);
+  border-radius:8px;
+  padding:8px 11px;
+  font-family:'DM Mono',monospace;
+  font-size:11px;
+  color:var(--text);
+  white-space:nowrap;
+  z-index:10;
+  box-shadow:0 6px 20px rgba(0,0,0,0.4);
+  transform:translate(-50%, -110%);
+  opacity:0;
+  transition:opacity 0.12s ease;
+}
+.chart-tooltip.visible{opacity:1;}
+.chart-tooltip-date{color:var(--dim);font-size:10px;margin-bottom:3px;letter-spacing:0.04em;}
+.chart-tooltip-val{font-size:13px;font-weight:500;}
+.chart-tooltip-row{font-size:10px;color:var(--muted);margin-top:2px;}
+
+/* DATE RANGE CONTROLS */
+.chart-controls{
+  margin-top:16px;
+  padding-top:14px;
+  border-top:1px solid rgba(30,40,96,0.5);
+}
+.chart-controls-top{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:14px;
+  flex-wrap:wrap;
+  margin-bottom:14px;
+}
+.chart-date-inputs{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  flex-wrap:wrap;
+}
+.chart-date-input{
+  background:rgba(8,12,46,0.7);
+  border:1px solid rgba(80,150,255,0.25);
+  border-radius:7px;
+  padding:6px 9px;
+  color:var(--text);
+  font-family:'DM Mono',monospace;
+  font-size:11px;
+  letter-spacing:0.04em;
+  outline:none;
+  transition:border-color 0.2s ease, box-shadow 0.2s ease;
+  color-scheme:dark;
+}
+.chart-date-input:focus{
+  border-color:var(--strong);
+  box-shadow:0 0 0 2px rgba(80,150,255,0.18);
+}
+.chart-date-sep{
+  color:var(--muted);
+  font-family:'DM Mono',monospace;
+  font-size:10px;
+  letter-spacing:0.06em;
+}
+.chart-preset-btns{
+  display:flex;
+  gap:6px;
+  flex-wrap:wrap;
+}
+.chart-preset-btn{
+  font-family:'DM Mono',monospace;
+  font-size:10px;
+  letter-spacing:0.08em;
+  text-transform:uppercase;
+  padding:5px 11px;
+  border-radius:6px;
+  cursor:pointer;
+  transition:all 0.2s ease;
+  border:1px solid rgba(80,150,255,0.18);
+  background:transparent;
+  color:var(--muted);
+}
+.chart-preset-btn:hover{border-color:rgba(80,150,255,0.35);color:var(--dim);}
+.chart-preset-btn.active{
+  background:rgba(80,150,255,0.14);
+  border-color:rgba(80,150,255,0.4);
+  color:var(--strong);
+  font-weight:500;
+}
+
+/* DUAL-HANDLE RANGE SLIDER */
+.chart-slider-wrap{
+  position:relative;
+  height:36px;
+  padding:0 10px;
+  margin-top:4px;
+}
+.chart-slider-track{
+  position:absolute;
+  top:50%;
+  left:10px;
+  right:10px;
+  height:4px;
+  transform:translateY(-50%);
+  background:rgba(30,40,96,0.7);
+  border-radius:3px;
+}
+.chart-slider-range{
+  position:absolute;
+  top:0;
+  bottom:0;
+  background:linear-gradient(90deg,var(--strong),var(--gold));
+  border-radius:3px;
+}
+.chart-slider-input{
+  position:absolute;
+  top:50%;
+  left:10px;
+  right:10px;
+  width:calc(100% - 20px);
+  height:4px;
+  transform:translateY(-50%);
+  -webkit-appearance:none;
+  appearance:none;
+  background:none;
+  pointer-events:none;
+  outline:none;
+  margin:0;
+  padding:0;
+}
+.chart-slider-input::-webkit-slider-thumb{
+  -webkit-appearance:none;
+  appearance:none;
+  pointer-events:auto;
+  width:18px;
+  height:18px;
+  border-radius:50%;
+  background:var(--bg);
+  border:2px solid var(--strong);
+  cursor:pointer;
+  box-shadow:0 2px 8px rgba(0,0,0,0.4);
+  transition:transform 0.15s ease, border-color 0.15s ease;
+}
+.chart-slider-input::-webkit-slider-thumb:hover{
+  transform:scale(1.15);
+  border-color:var(--gold);
+}
+.chart-slider-input::-moz-range-thumb{
+  pointer-events:auto;
+  width:18px;
+  height:18px;
+  border-radius:50%;
+  background:var(--bg);
+  border:2px solid var(--strong);
+  cursor:pointer;
+  box-shadow:0 2px 8px rgba(0,0,0,0.4);
+  transition:transform 0.15s ease, border-color 0.15s ease;
+}
+.chart-slider-input::-moz-range-thumb:hover{
+  transform:scale(1.15);
+  border-color:var(--gold);
+}
+.chart-slider-input.upper{z-index:2;}
+.chart-slider-input.lower{z-index:3;}
+.chart-slider-labels{
+  display:flex;
+  justify-content:space-between;
+  margin-top:2px;
+  font-family:'DM Mono',monospace;
+  font-size:9px;
+  color:var(--muted);
+  letter-spacing:0.04em;
+  padding:0 4px;
+}
+.chart-empty{
+  text-align:center;
+  padding:40px 20px;
+  font-family:'DM Mono',monospace;
+  font-size:12px;
+  color:var(--muted);
+  letter-spacing:0.04em;
+}
+
+@media (max-width: 640px){
+  .chart-card{padding:16px 14px 14px;}
+  .chart-header{margin-bottom:10px;}
+  .chart-title{font-size:10px;}
+  .chart-summary{gap:10px;font-size:10px;}
+  .chart-summary-label{font-size:9px;}
+  .chart-controls-top{gap:10px;}
+  .chart-date-input{font-size:10px;padding:5px 7px;}
+  .chart-preset-btn{font-size:9px;padding:4px 9px;}
+  .chart-axis-label{font-size:9px;}
+}
 </style>
 </head>
 <body>
@@ -684,7 +963,31 @@ function computeStats(picks) {
   stats.last15 = sliceStats(picks, 15);
   stats.last30 = sliceStats(picks, 30);
 
+  // Daily profit time series (sorted ascending by date, with cumulative running total)
+  stats.dailyProfits = buildDailyProfitSeries(picks);
+
   return stats;
+}
+
+// Build a sorted, day-by-day profit series. Each entry holds the calendar date,
+// the profit booked that day, the cumulative profit through that day, and the
+// number of picks that day. Days with no picks are skipped (the line connects
+// across them naturally).
+function buildDailyProfitSeries(picks) {
+  const dayMap = {};
+  picks.forEach(p => {
+    const d = parseDate(p['Date']);
+    if (!d) return;
+    const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    if (!dayMap[key]) dayMap[key] = { dateKey: key, dateObj: new Date(d.getFullYear(), d.getMonth(), d.getDate()), profit: 0, picks: 0 };
+    const profit = parseFloat(p['Profit']);
+    if (!isNaN(profit)) dayMap[key].profit += profit;
+    dayMap[key].picks += 1;
+  });
+  const arr = Object.values(dayMap).sort((a,b) => a.dateObj - b.dateObj);
+  let running = 0;
+  arr.forEach(d => { running += d.profit; d.cumulative = running; });
+  return arr;
 }
 
 function cleanUnicode(str) {
@@ -866,6 +1169,42 @@ function renderDashboard(stats) {
   html += renderPeriodCard('Last 15 Days', stats.last15, 'pc-15');
   html += renderPeriodCard('Last 30 Days', stats.last30, 'pc-30');
   html += `</div>`;
+
+  // ── PROFIT OVER TIME CHART ──
+  html += `<div class="chart-card" id="profitChartCard">
+    <div class="chart-header">
+      <div class="chart-title">Profit Over Time</div>
+      <div class="chart-summary" id="chartSummary"></div>
+    </div>
+    <div class="chart-svg-wrap" id="chartSvgWrap"></div>
+    <div class="chart-controls">
+      <div class="chart-controls-top">
+        <div class="chart-date-inputs">
+          <input type="date" class="chart-date-input" id="chartDateStart" />
+          <span class="chart-date-sep">→</span>
+          <input type="date" class="chart-date-input" id="chartDateEnd" />
+        </div>
+        <div class="chart-preset-btns">
+          <button class="chart-preset-btn" data-preset="7">7D</button>
+          <button class="chart-preset-btn active" data-preset="30">30D</button>
+          <button class="chart-preset-btn" data-preset="90">90D</button>
+          <button class="chart-preset-btn" data-preset="all">All</button>
+        </div>
+      </div>
+      <div class="chart-slider-wrap">
+        <div class="chart-slider-track">
+          <div class="chart-slider-range" id="chartSliderRange"></div>
+        </div>
+        <input type="range" class="chart-slider-input lower" id="chartSliderLower" min="0" max="100" value="0" />
+        <input type="range" class="chart-slider-input upper" id="chartSliderUpper" min="0" max="100" value="100" />
+      </div>
+      <div class="chart-slider-labels">
+        <span id="chartSliderLabelMin"></span>
+        <span id="chartSliderLabelMax"></span>
+      </div>
+    </div>
+  </div>`;
+
   html += `<div class="recent-picks-note"><span class="section-badge badge-blue">Last 30 Picks</span></div>`;
 
   // Picks table
@@ -1102,6 +1441,396 @@ function renderTodayPicks(picks) {
 
 let currentTab = 'results';
 let cachedCSVText = null;
+// Holds the most recently computed daily profit series so the chart's
+// date controls can re-render without re-parsing the whole CSV.
+let chartSeries = [];
+let chartState = { startMs: null, endMs: null, preset: '30' };
+
+// ── PROFIT CHART ──────────────────────────────────────────────
+// Format a Date as YYYY-MM-DD for <input type="date"> values.
+function fmtDateInput(d) {
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+// Format a Date for axis ticks / tooltip headers (e.g. "May 1").
+function fmtDateShort(d) {
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
+function fmtDateLong(d) {
+  return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+}
+// Strip the time portion off a date so range comparisons are inclusive of
+// the entire calendar day.
+function startOfDay(d) {
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+}
+
+function initProfitChart() {
+  if (!chartSeries.length) {
+    const wrap = document.getElementById('chartSvgWrap');
+    if (wrap) wrap.innerHTML = '<div class="chart-empty">No completed picks available to chart yet.</div>';
+    return;
+  }
+
+  // Domain: earliest pick date → today. Today is the upper bound even if no
+  // picks have been booked yet today, so the slider always slides up to "now".
+  const minMs = startOfDay(chartSeries[0].dateObj);
+  const todayMs = startOfDay(new Date());
+  const lastDataMs = startOfDay(chartSeries[chartSeries.length - 1].dateObj);
+  const maxMs = Math.max(todayMs, lastDataMs);
+
+  // Default range = last 30 days, clamped to the available data range.
+  const defaultStart = Math.max(minMs, maxMs - 30 * 86400000);
+  chartState.startMs = defaultStart;
+  chartState.endMs = maxMs;
+  chartState.preset = '30';
+  // Stash the absolute domain so the slider can map [0..1000] -> ms.
+  chartState.domainMin = minMs;
+  chartState.domainMax = maxMs;
+
+  // Initialize date inputs
+  const startInput = document.getElementById('chartDateStart');
+  const endInput = document.getElementById('chartDateEnd');
+  if (startInput && endInput) {
+    startInput.min = fmtDateInput(new Date(minMs));
+    startInput.max = fmtDateInput(new Date(maxMs));
+    endInput.min = fmtDateInput(new Date(minMs));
+    endInput.max = fmtDateInput(new Date(maxMs));
+    startInput.value = fmtDateInput(new Date(defaultStart));
+    endInput.value = fmtDateInput(new Date(maxMs));
+    startInput.addEventListener('change', onDateInputChange);
+    endInput.addEventListener('change', onDateInputChange);
+  }
+
+  // Initialize slider — range inputs use 0..1000 for finer granularity than
+  // the default 100 step, then we map back to milliseconds.
+  const lower = document.getElementById('chartSliderLower');
+  const upper = document.getElementById('chartSliderUpper');
+  if (lower && upper) {
+    lower.min = 0; lower.max = 1000;
+    upper.min = 0; upper.max = 1000;
+    lower.addEventListener('input', onSliderInput);
+    upper.addEventListener('input', onSliderInput);
+  }
+
+  // Slider edge labels show the absolute earliest/latest available dates
+  document.getElementById('chartSliderLabelMin').textContent = fmtDateShort(new Date(minMs));
+  document.getElementById('chartSliderLabelMax').textContent = fmtDateShort(new Date(maxMs));
+
+  // Preset buttons
+  document.querySelectorAll('.chart-preset-btn').forEach(btn => {
+    btn.addEventListener('click', () => onPresetClick(btn.dataset.preset));
+  });
+
+  syncSliderFromState();
+  renderChart();
+}
+
+function msToSliderPos(ms) {
+  const span = chartState.domainMax - chartState.domainMin;
+  if (span <= 0) return 0;
+  return Math.round(((ms - chartState.domainMin) / span) * 1000);
+}
+function sliderPosToMs(pos) {
+  const span = chartState.domainMax - chartState.domainMin;
+  // Snap slider positions to whole days so dragging never lands on a
+  // half-day that the date inputs can't represent.
+  const ms = chartState.domainMin + (pos / 1000) * span;
+  return startOfDay(new Date(ms));
+}
+
+function syncSliderFromState() {
+  const lower = document.getElementById('chartSliderLower');
+  const upper = document.getElementById('chartSliderUpper');
+  const range = document.getElementById('chartSliderRange');
+  if (!lower || !upper || !range) return;
+  const lowPos = msToSliderPos(chartState.startMs);
+  const highPos = msToSliderPos(chartState.endMs);
+  lower.value = lowPos;
+  upper.value = highPos;
+  range.style.left = (lowPos / 10) + '%';
+  range.style.width = ((highPos - lowPos) / 10) + '%';
+}
+
+function onSliderInput() {
+  const lower = document.getElementById('chartSliderLower');
+  const upper = document.getElementById('chartSliderUpper');
+  let lowPos = parseInt(lower.value, 10);
+  let highPos = parseInt(upper.value, 10);
+  // Enforce a minimum 1-day gap so the chart always has something to draw.
+  if (highPos - lowPos < Math.max(1, Math.round(1000 / Math.max(1, (chartState.domainMax - chartState.domainMin) / 86400000)))) {
+    if (this === lower) {
+      lowPos = Math.max(0, highPos - 1);
+      lower.value = lowPos;
+    } else {
+      highPos = Math.min(1000, lowPos + 1);
+      upper.value = highPos;
+    }
+  }
+  chartState.startMs = sliderPosToMs(lowPos);
+  chartState.endMs = sliderPosToMs(highPos);
+  chartState.preset = 'custom';
+  // Reflect changes in the date inputs and presets, then redraw.
+  document.getElementById('chartDateStart').value = fmtDateInput(new Date(chartState.startMs));
+  document.getElementById('chartDateEnd').value = fmtDateInput(new Date(chartState.endMs));
+  updatePresetButtons();
+  syncSliderFromState();
+  renderChart();
+}
+
+function onDateInputChange() {
+  const startInput = document.getElementById('chartDateStart');
+  const endInput = document.getElementById('chartDateEnd');
+  // The native date input gives us YYYY-MM-DD. Parse it as a local date so it
+  // doesn't shift by a timezone offset.
+  const parseLocal = (str) => {
+    const [y,m,d] = str.split('-').map(n => parseInt(n,10));
+    return new Date(y, m-1, d).getTime();
+  };
+  let s = parseLocal(startInput.value);
+  let e = parseLocal(endInput.value);
+  if (isNaN(s) || isNaN(e)) return;
+  // Clamp into the available domain and ensure start <= end.
+  s = Math.max(chartState.domainMin, Math.min(chartState.domainMax, s));
+  e = Math.max(chartState.domainMin, Math.min(chartState.domainMax, e));
+  if (s > e) { const tmp = s; s = e; e = tmp; }
+  chartState.startMs = s;
+  chartState.endMs = e;
+  chartState.preset = 'custom';
+  startInput.value = fmtDateInput(new Date(s));
+  endInput.value = fmtDateInput(new Date(e));
+  updatePresetButtons();
+  syncSliderFromState();
+  renderChart();
+}
+
+function onPresetClick(preset) {
+  chartState.preset = preset;
+  const endMs = chartState.domainMax;
+  let startMs;
+  if (preset === 'all') {
+    startMs = chartState.domainMin;
+  } else {
+    const days = parseInt(preset, 10);
+    startMs = Math.max(chartState.domainMin, endMs - days * 86400000);
+  }
+  chartState.startMs = startMs;
+  chartState.endMs = endMs;
+  document.getElementById('chartDateStart').value = fmtDateInput(new Date(startMs));
+  document.getElementById('chartDateEnd').value = fmtDateInput(new Date(endMs));
+  updatePresetButtons();
+  syncSliderFromState();
+  renderChart();
+}
+
+function updatePresetButtons() {
+  document.querySelectorAll('.chart-preset-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.preset === chartState.preset);
+  });
+}
+
+function renderChart() {
+  const wrap = document.getElementById('chartSvgWrap');
+  const summary = document.getElementById('chartSummary');
+  if (!wrap) return;
+
+  // Filter the daily series to the selected window. Each filtered point's
+  // `cumulative` is the running total across ALL picks (not just the window),
+  // so we re-base it to the window start so the curve begins at the
+  // window-start profit baseline.
+  const filtered = chartSeries.filter(d => {
+    const ms = startOfDay(d.dateObj);
+    return ms >= chartState.startMs && ms <= chartState.endMs;
+  });
+
+  if (filtered.length === 0) {
+    wrap.innerHTML = '<div class="chart-empty">No picks in the selected date range.</div>';
+    if (summary) summary.innerHTML = '';
+    return;
+  }
+
+  // Compute window profit (sum of daily profit within the window).
+  const windowProfit = filtered.reduce((acc, d) => acc + d.profit, 0);
+  const windowPicks = filtered.reduce((acc, d) => acc + d.picks, 0);
+  // Build cumulative within window for the chart line.
+  let cum = 0;
+  const points = filtered.map(d => {
+    cum += d.profit;
+    return { dateObj: d.dateObj, dateMs: startOfDay(d.dateObj), profit: d.profit, picks: d.picks, cumulative: cum };
+  });
+
+  // Update summary line above the chart
+  if (summary) {
+    const profitClass = windowProfit >= 0 ? 'val-green' : 'val-red';
+    const sign = windowProfit >= 0 ? '+' : '';
+    summary.innerHTML = `
+      <div class="chart-summary-item">
+        <span class="chart-summary-label">Profit</span>
+        <span class="chart-summary-val ${profitClass}">${sign}${windowProfit.toFixed(2)}u</span>
+      </div>
+      <div class="chart-summary-item">
+        <span class="chart-summary-label">Picks</span>
+        <span class="chart-summary-val val-blue">${windowPicks}</span>
+      </div>
+      <div class="chart-summary-item">
+        <span class="chart-summary-label">Days</span>
+        <span class="chart-summary-val val-blue">${points.length}</span>
+      </div>
+    `;
+  }
+
+  // ── Build SVG ──
+  // We use a fixed viewBox and let the SVG scale responsively via width:100%.
+  const VB_W = 800, VB_H = 280;
+  const M = { top: 16, right: 18, bottom: 36, left: 52 };
+  const innerW = VB_W - M.left - M.right;
+  const innerH = VB_H - M.top - M.bottom;
+
+  // X domain spans the SELECTED window so the curve always fills the chart
+  // even if picks only land on a few days inside the range.
+  const xMin = chartState.startMs;
+  const xMax = chartState.endMs;
+  const xSpan = Math.max(1, xMax - xMin);
+  const xScale = (ms) => M.left + ((ms - xMin) / xSpan) * innerW;
+
+  // Y domain padded so line never touches edges. Always include 0 so the
+  // zero baseline shows whether the window is profitable or not.
+  let yLo = Math.min(0, ...points.map(p => p.cumulative));
+  let yHi = Math.max(0, ...points.map(p => p.cumulative));
+  if (yLo === yHi) { yLo -= 1; yHi += 1; }
+  const yPad = (yHi - yLo) * 0.12;
+  yLo -= yPad; yHi += yPad;
+  const yScale = (v) => M.top + (1 - (v - yLo) / (yHi - yLo)) * innerH;
+
+  // Y ticks — 5 evenly-spaced "nice" values
+  const yTicks = niceTicks(yLo, yHi, 5);
+  // X ticks — 5 dates evenly across the domain
+  const xTickCount = Math.min(6, Math.max(2, points.length));
+  const xTicks = [];
+  for (let i = 0; i < xTickCount; i++) {
+    xTicks.push(xMin + (xSpan * i) / (xTickCount - 1));
+  }
+
+  // Build line path
+  const linePath = points.map((p, i) => `${i === 0 ? 'M' : 'L'}${xScale(p.dateMs).toFixed(2)},${yScale(p.cumulative).toFixed(2)}`).join(' ');
+  // Area path (line down to zero baseline). Split into pos/neg fills via clip.
+  const zeroY = yScale(0);
+  const areaPath = `${linePath} L${xScale(points[points.length-1].dateMs).toFixed(2)},${zeroY.toFixed(2)} L${xScale(points[0].dateMs).toFixed(2)},${zeroY.toFixed(2)} Z`;
+
+  let svg = `<svg class="chart-svg" viewBox="0 0 ${VB_W} ${VB_H}" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">`;
+
+  svg += `<defs>
+    <linearGradient id="chartLineGradient" x1="0" x2="1" y1="0" y2="0">
+      <stop offset="0%" stop-color="#5096ff"/>
+      <stop offset="100%" stop-color="#a06eff"/>
+    </linearGradient>
+    <clipPath id="chartClipPos"><rect x="0" y="${M.top}" width="${VB_W}" height="${zeroY - M.top}"/></clipPath>
+    <clipPath id="chartClipNeg"><rect x="0" y="${zeroY}" width="${VB_W}" height="${(M.top + innerH) - zeroY}"/></clipPath>
+  </defs>`;
+
+  // Horizontal gridlines + Y-axis labels
+  yTicks.forEach(t => {
+    const y = yScale(t).toFixed(2);
+    svg += `<line class="chart-grid-line" x1="${M.left}" x2="${M.left + innerW}" y1="${y}" y2="${y}"/>`;
+    svg += `<text class="chart-axis-label" x="${M.left - 8}" y="${y}" text-anchor="end" dominant-baseline="middle">${(t >= 0 ? '+' : '') + t.toFixed(1)}u</text>`;
+  });
+  // Zero baseline (dashed, slightly more visible)
+  svg += `<line class="chart-zero-line" x1="${M.left}" x2="${M.left + innerW}" y1="${zeroY.toFixed(2)}" y2="${zeroY.toFixed(2)}"/>`;
+
+  // Filled area beneath the line, split into green-above-zero and red-below-zero.
+  svg += `<path d="${areaPath}" class="chart-area-pos" clip-path="url(#chartClipPos)"/>`;
+  svg += `<path d="${areaPath}" class="chart-area-neg" clip-path="url(#chartClipNeg)"/>`;
+
+  // Line itself
+  svg += `<path d="${linePath}" class="chart-line"/>`;
+
+  // X-axis line + tick labels
+  svg += `<line class="chart-axis-line" x1="${M.left}" x2="${M.left + innerW}" y1="${M.top + innerH}" y2="${M.top + innerH}"/>`;
+  xTicks.forEach((t, i) => {
+    const x = xScale(t).toFixed(2);
+    const anchor = i === 0 ? 'start' : i === xTicks.length - 1 ? 'end' : 'middle';
+    svg += `<text class="chart-axis-label" x="${x}" y="${M.top + innerH + 18}" text-anchor="${anchor}">${fmtDateShort(new Date(t))}</text>`;
+  });
+
+  // Hover overlay group (line + dots get drawn last so they sit on top).
+  // We draw circles for every data point but make them transparent unless hovered.
+  svg += `<g id="chartHoverGroup" style="display:none;">
+    <line id="chartHoverLine" class="chart-hover-line" x1="0" x2="0" y1="${M.top}" y2="${M.top + innerH}"/>
+    <circle id="chartHoverDot" cx="0" cy="0" r="4" class="chart-dot"/>
+  </g>`;
+
+  // Invisible overlay rect to capture pointer events across the plot area.
+  svg += `<rect id="chartHoverRect" x="${M.left}" y="${M.top}" width="${innerW}" height="${innerH}" fill="transparent" style="cursor:crosshair;"/>`;
+
+  svg += `</svg><div class="chart-tooltip" id="chartTooltip"></div>`;
+
+  wrap.innerHTML = svg;
+
+  // Hover interactions — find nearest point by x, move the indicator + tooltip.
+  const rect = document.getElementById('chartHoverRect');
+  const grp = document.getElementById('chartHoverGroup');
+  const hLine = document.getElementById('chartHoverLine');
+  const hDot = document.getElementById('chartHoverDot');
+  const tip = document.getElementById('chartTooltip');
+  const svgEl = wrap.querySelector('svg');
+
+  function pointerMove(e) {
+    const bbox = svgEl.getBoundingClientRect();
+    // Convert client X to viewBox X.
+    const vbX = ((e.clientX - bbox.left) / bbox.width) * VB_W;
+    // Find the closest data point.
+    let nearest = points[0]; let nd = Infinity;
+    points.forEach(p => {
+      const dx = Math.abs(xScale(p.dateMs) - vbX);
+      if (dx < nd) { nd = dx; nearest = p; }
+    });
+    const cx = xScale(nearest.dateMs);
+    const cy = yScale(nearest.cumulative);
+    grp.style.display = '';
+    hLine.setAttribute('x1', cx); hLine.setAttribute('x2', cx);
+    hDot.setAttribute('cx', cx); hDot.setAttribute('cy', cy);
+    // Position tooltip in pixel space (relative to the wrap div).
+    const tipX = (cx / VB_W) * bbox.width;
+    const tipY = (cy / VB_H) * bbox.height;
+    const profitSign = nearest.profit >= 0 ? '+' : '';
+    const cumSign = nearest.cumulative >= 0 ? '+' : '';
+    const cumCls = nearest.cumulative >= 0 ? 'val-green' : 'val-red';
+    tip.innerHTML = `
+      <div class="chart-tooltip-date">${fmtDateLong(nearest.dateObj)}</div>
+      <div class="chart-tooltip-val ${cumCls}">${cumSign}${nearest.cumulative.toFixed(2)}u</div>
+      <div class="chart-tooltip-row">Day: ${profitSign}${nearest.profit.toFixed(2)}u · ${nearest.picks} pick${nearest.picks!==1?'s':''}</div>
+    `;
+    tip.style.left = tipX + 'px';
+    tip.style.top = tipY + 'px';
+    tip.classList.add('visible');
+  }
+  function pointerLeave() {
+    grp.style.display = 'none';
+    tip.classList.remove('visible');
+  }
+  rect.addEventListener('mousemove', pointerMove);
+  rect.addEventListener('mouseleave', pointerLeave);
+  rect.addEventListener('touchmove', (e) => { if (e.touches[0]) pointerMove(e.touches[0]); }, { passive: true });
+  rect.addEventListener('touchend', pointerLeave);
+}
+
+// Generate ~targetCount "nice" round-number ticks that span [lo, hi].
+function niceTicks(lo, hi, targetCount) {
+  const span = hi - lo;
+  if (span <= 0) return [lo];
+  const rough = span / Math.max(1, targetCount - 1);
+  const mag = Math.pow(10, Math.floor(Math.log10(rough)));
+  const norm = rough / mag;
+  let step;
+  if (norm < 1.5) step = 1 * mag;
+  else if (norm < 3) step = 2 * mag;
+  else if (norm < 7) step = 5 * mag;
+  else step = 10 * mag;
+  const start = Math.ceil(lo / step) * step;
+  const ticks = [];
+  for (let v = start; v <= hi + 1e-9; v += step) ticks.push(parseFloat(v.toFixed(6)));
+  return ticks;
+}
+// ── END PROFIT CHART ──────────────────────────────────────────
 
 function switchTab(tab) {
   currentTab = tab;
@@ -1122,6 +1851,8 @@ function renderCurrentTab(text) {
     }
     const stats = computeStats(picks);
     container.innerHTML = renderDashboard(stats);
+    chartSeries = stats.dailyProfits || [];
+    initProfitChart();
   } else {
     const todayPicks = parseTodayPicks(text);
     container.innerHTML = renderTodayPicks(todayPicks);
