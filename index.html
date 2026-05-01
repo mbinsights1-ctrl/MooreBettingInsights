@@ -555,7 +555,7 @@ td.game-cell{max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:
 .chart-header{
   display:flex;
   align-items:center;
-  justify-content:space-between;
+  justify-content:flex-end;
   flex-wrap:wrap;
   gap:10px;
   margin-bottom:14px;
@@ -805,8 +805,8 @@ td.game-cell{max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:
   .chart-title{font-size:10px;}
   .chart-summary{gap:10px;font-size:10px;}
   .chart-summary-label{font-size:9px;}
-  .chart-controls-top{gap:10px;}
-  .chart-date-input{font-size:10px;padding:5px 7px;}
+  .chart-controls-top{gap:10px;justify-content:center;}
+  .chart-date-inputs{display:none;}
   .chart-preset-btn{font-size:9px;padding:4px 9px;}
   .chart-axis-label{font-size:9px;}
 }
@@ -970,19 +970,37 @@ function computeStats(picks) {
 }
 
 // Build a sorted, day-by-day profit series. Each entry holds the calendar date,
-// the profit booked that day, the cumulative profit through that day, and the
-// number of picks that day. Days with no picks are skipped (the line connects
-// across them naturally).
+// the profit booked that day, the cumulative profit through that day, the
+// number of picks that day, and W/L/P counts so the chart summary can show
+// record and ROI for any selected window.
+//
+// IMPORTANT: dates from the sheet arrive as YYYY-MM-DD. `new Date('YYYY-MM-DD')`
+// parses these as UTC midnight, which becomes the *previous* day in any
+// timezone west of UTC — that's why a 4/30 pick was disappearing for an
+// EDT user. We parse the YYYY-MM-DD prefix explicitly into local time here
+// to keep day buckets aligned with the sheet's intent.
 function buildDailyProfitSeries(picks) {
   const dayMap = {};
   picks.forEach(p => {
-    const d = parseDate(p['Date']);
-    if (!d) return;
-    const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-    if (!dayMap[key]) dayMap[key] = { dateKey: key, dateObj: new Date(d.getFullYear(), d.getMonth(), d.getDate()), profit: 0, picks: 0 };
+    const raw = (p['Date'] || '').trim();
+    if (!raw) return;
+    const m = raw.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    let dateObj;
+    if (m) {
+      dateObj = new Date(parseInt(m[1],10), parseInt(m[2],10) - 1, parseInt(m[3],10));
+    } else {
+      const fallback = parseDate(raw);
+      if (!fallback) return;
+      dateObj = new Date(fallback.getFullYear(), fallback.getMonth(), fallback.getDate());
+    }
+    const key = `${dateObj.getFullYear()}-${String(dateObj.getMonth()+1).padStart(2,'0')}-${String(dateObj.getDate()).padStart(2,'0')}`;
+    if (!dayMap[key]) dayMap[key] = { dateKey: key, dateObj, profit: 0, picks: 0, wins: 0, losses: 0, pushes: 0 };
     const profit = parseFloat(p['Profit']);
     if (!isNaN(profit)) dayMap[key].profit += profit;
     dayMap[key].picks += 1;
+    if (p['Result'] === 'W') dayMap[key].wins += 1;
+    else if (p['Result'] === 'L') dayMap[key].losses += 1;
+    else if (p['Result'] === 'P') dayMap[key].pushes += 1;
   });
   const arr = Object.values(dayMap).sort((a,b) => a.dateObj - b.dateObj);
   let running = 0;
@@ -1173,7 +1191,6 @@ function renderDashboard(stats) {
   // ── PROFIT OVER TIME CHART ──
   html += `<div class="chart-card" id="profitChartCard">
     <div class="chart-header">
-      <div class="chart-title">Profit Over Time</div>
       <div class="chart-summary" id="chartSummary"></div>
     </div>
     <div class="chart-svg-wrap" id="chartSvgWrap"></div>
@@ -1186,9 +1203,9 @@ function renderDashboard(stats) {
         </div>
         <div class="chart-preset-btns">
           <button class="chart-preset-btn" data-preset="7">7D</button>
-          <button class="chart-preset-btn active" data-preset="30">30D</button>
+          <button class="chart-preset-btn" data-preset="30">30D</button>
           <button class="chart-preset-btn" data-preset="90">90D</button>
-          <button class="chart-preset-btn" data-preset="all">All</button>
+          <button class="chart-preset-btn active" data-preset="all">All</button>
         </div>
       </div>
       <div class="chart-slider-wrap">
@@ -1471,18 +1488,24 @@ function initProfitChart() {
     return;
   }
 
-  // Domain: earliest pick date → today. Today is the upper bound even if no
-  // picks have been booked yet today, so the slider always slides up to "now".
+  // Domain: earliest pick date → yesterday. We cap at "today − 1" because
+  // today's results aren't booked yet — picks for today still have empty
+  // Result fields and won't be in the parsed series at all, so showing today
+  // on the axis would just produce an empty trailing edge. Yesterday is the
+  // most recent day with finalized results.
   const minMs = startOfDay(chartSeries[0].dateObj);
-  const todayMs = startOfDay(new Date());
+  const today = new Date();
+  const yesterdayMs = startOfDay(new Date(today.getFullYear(), today.getMonth(), today.getDate() - 1));
   const lastDataMs = startOfDay(chartSeries[chartSeries.length - 1].dateObj);
-  const maxMs = Math.max(todayMs, lastDataMs);
+  // If for any reason the latest pick is older than yesterday, fall back to it.
+  // If the latest pick is somehow today, clamp it to yesterday so we never
+  // expose a partial day.
+  const maxMs = Math.min(yesterdayMs, Math.max(lastDataMs, yesterdayMs));
 
-  // Default range = last 30 days, clamped to the available data range.
-  const defaultStart = Math.max(minMs, maxMs - 30 * 86400000);
-  chartState.startMs = defaultStart;
+  // Default range = all time so users see the full season at a glance.
+  chartState.startMs = minMs;
   chartState.endMs = maxMs;
-  chartState.preset = '30';
+  chartState.preset = 'all';
   // Stash the absolute domain so the slider can map [0..1000] -> ms.
   chartState.domainMin = minMs;
   chartState.domainMax = maxMs;
@@ -1495,7 +1518,7 @@ function initProfitChart() {
     startInput.max = fmtDateInput(new Date(maxMs));
     endInput.min = fmtDateInput(new Date(minMs));
     endInput.max = fmtDateInput(new Date(maxMs));
-    startInput.value = fmtDateInput(new Date(defaultStart));
+    startInput.value = fmtDateInput(new Date(chartState.startMs));
     endInput.value = fmtDateInput(new Date(maxMs));
     startInput.addEventListener('change', onDateInputChange);
     endInput.addEventListener('change', onDateInputChange);
@@ -1648,9 +1671,15 @@ function renderChart() {
     return;
   }
 
-  // Compute window profit (sum of daily profit within the window).
+  // Compute window aggregates for the summary line: profit, W-L-P record,
+  // and ROI on a "1 unit per pick" basis (matching how the hero ROI card
+  // computes it across the full season).
   const windowProfit = filtered.reduce((acc, d) => acc + d.profit, 0);
-  const windowPicks = filtered.reduce((acc, d) => acc + d.picks, 0);
+  const windowWins = filtered.reduce((acc, d) => acc + d.wins, 0);
+  const windowLosses = filtered.reduce((acc, d) => acc + d.losses, 0);
+  const windowPushes = filtered.reduce((acc, d) => acc + d.pushes, 0);
+  const windowPicks = windowWins + windowLosses + windowPushes;
+  const windowROI = windowPicks > 0 ? (windowProfit / windowPicks * 100) : 0;
   // Build cumulative within window for the chart line.
   let cum = 0;
   const points = filtered.map(d => {
@@ -1661,19 +1690,23 @@ function renderChart() {
   // Update summary line above the chart
   if (summary) {
     const profitClass = windowProfit >= 0 ? 'val-green' : 'val-red';
-    const sign = windowProfit >= 0 ? '+' : '';
+    const profitSign = windowProfit >= 0 ? '+' : '';
+    const roiClass = windowROI >= 0 ? 'val-green' : 'val-red';
+    const roiSign = windowROI >= 0 ? '+' : '';
+    const recordClass = windowWins > windowLosses ? 'val-green' : windowLosses > windowWins ? 'val-red' : 'val-blue';
+    const recordStr = `${windowWins}-${windowLosses}${windowPushes > 0 ? '-'+windowPushes : ''}`;
     summary.innerHTML = `
       <div class="chart-summary-item">
+        <span class="chart-summary-label">Record</span>
+        <span class="chart-summary-val ${recordClass}">${recordStr}</span>
+      </div>
+      <div class="chart-summary-item">
         <span class="chart-summary-label">Profit</span>
-        <span class="chart-summary-val ${profitClass}">${sign}${windowProfit.toFixed(2)}u</span>
+        <span class="chart-summary-val ${profitClass}">${profitSign}${windowProfit.toFixed(2)}u</span>
       </div>
       <div class="chart-summary-item">
-        <span class="chart-summary-label">Picks</span>
-        <span class="chart-summary-val val-blue">${windowPicks}</span>
-      </div>
-      <div class="chart-summary-item">
-        <span class="chart-summary-label">Days</span>
-        <span class="chart-summary-val val-blue">${points.length}</span>
+        <span class="chart-summary-label">ROI</span>
+        <span class="chart-summary-val ${roiClass}">${roiSign}${windowROI.toFixed(1)}%</span>
       </div>
     `;
   }
@@ -1703,12 +1736,12 @@ function renderChart() {
 
   // Y ticks — 5 evenly-spaced "nice" values
   const yTicks = niceTicks(yLo, yHi, 5);
-  // X ticks — 5 dates evenly across the domain
-  const xTickCount = Math.min(6, Math.max(2, points.length));
-  const xTicks = [];
-  for (let i = 0; i < xTickCount; i++) {
-    xTicks.push(xMin + (xSpan * i) / (xTickCount - 1));
-  }
+  // X ticks — pick a "nice" date interval (1, 2, 3, 5, 7, 14, or 30 days, or
+  // monthly) so labels land on round dates the user can locate at a glance.
+  // Targeting ~5–7 ticks total. The ticks themselves are placed at calendar
+  // boundaries that fall *inside* the window, then we add the start/end as
+  // bookends so the chart edges are always labeled.
+  const xTicks = niceDateTicks(xMin, xMax, 6);
 
   // Build line path
   const linePath = points.map((p, i) => `${i === 0 ? 'M' : 'L'}${xScale(p.dateMs).toFixed(2)},${yScale(p.cumulative).toFixed(2)}`).join(' ');
@@ -1743,12 +1776,15 @@ function renderChart() {
   // Line itself
   svg += `<path d="${linePath}" class="chart-line"/>`;
 
-  // X-axis line + tick labels
+  // X-axis line + tick marks + tick labels. Each tick gets a small vertical
+  // mark on the axis itself plus a centered date label below it so it's
+  // visually obvious which point on the chart each label corresponds to.
   svg += `<line class="chart-axis-line" x1="${M.left}" x2="${M.left + innerW}" y1="${M.top + innerH}" y2="${M.top + innerH}"/>`;
-  xTicks.forEach((t, i) => {
+  xTicks.forEach((t) => {
     const x = xScale(t).toFixed(2);
-    const anchor = i === 0 ? 'start' : i === xTicks.length - 1 ? 'end' : 'middle';
-    svg += `<text class="chart-axis-label" x="${x}" y="${M.top + innerH + 18}" text-anchor="${anchor}">${fmtDateShort(new Date(t))}</text>`;
+    const yAxis = M.top + innerH;
+    svg += `<line class="chart-axis-line" x1="${x}" x2="${x}" y1="${yAxis}" y2="${yAxis + 4}"/>`;
+    svg += `<text class="chart-axis-label" x="${x}" y="${yAxis + 18}" text-anchor="middle">${fmtDateShort(new Date(t))}</text>`;
   });
 
   // Hover overlay group (line + dots get drawn last so they sit on top).
@@ -1829,6 +1865,61 @@ function niceTicks(lo, hi, targetCount) {
   const ticks = [];
   for (let v = start; v <= hi + 1e-9; v += step) ticks.push(parseFloat(v.toFixed(6)));
   return ticks;
+}
+
+// Generate "nice" date ticks that fall on round calendar boundaries inside
+// [minMs, maxMs]. We pick a step (in days, or monthly) that yields around
+// targetCount labels, then snap to multiples of that step from a sensible
+// anchor (start of month for monthly, or just every Nth day from minMs for
+// daily). The window edges (minMs, maxMs) are always included as bookends
+// so the chart's left/right boundaries are always labeled.
+function niceDateTicks(minMs, maxMs, targetCount) {
+  const DAY = 86400000;
+  const spanDays = Math.max(1, Math.round((maxMs - minMs) / DAY));
+  // Candidate step intervals in days. "month" is handled specially below.
+  const candidates = [1, 2, 3, 5, 7, 14, 'month', 60, 90];
+  // Pick the candidate that produces a tick count closest to targetCount.
+  let bestStep = 1;
+  let bestDiff = Infinity;
+  for (const c of candidates) {
+    const stepDays = c === 'month' ? 30 : c;
+    const count = Math.floor(spanDays / stepDays) + 1;
+    const diff = Math.abs(count - targetCount);
+    if (diff < bestDiff || (diff === bestDiff && count >= 2)) {
+      bestDiff = diff;
+      bestStep = c;
+    }
+  }
+  const ticks = [];
+  // Always include the window start.
+  ticks.push(minMs);
+  if (bestStep === 'month') {
+    // First-of-month ticks strictly inside the window (we don't double-count
+    // the bookends).
+    const start = new Date(minMs);
+    let cursor = new Date(start.getFullYear(), start.getMonth() + 1, 1).getTime();
+    while (cursor <= maxMs) {
+      if (cursor - minMs > DAY * 2 && maxMs - cursor > DAY * 2) ticks.push(cursor);
+      const d = new Date(cursor);
+      cursor = new Date(d.getFullYear(), d.getMonth() + 1, 1).getTime();
+    }
+  } else {
+    // Every Nth day starting one full step in from the window's left edge,
+    // so the first interior tick has breathing room from the start label.
+    const stepMs = bestStep * DAY;
+    let cursor = minMs + stepMs;
+    while (cursor < maxMs) {
+      // Skip ticks that would crowd the start or end labels.
+      if (cursor - minMs > stepMs * 0.5 && maxMs - cursor > stepMs * 0.5) {
+        ticks.push(cursor);
+      }
+      cursor += stepMs;
+    }
+  }
+  // Always include the window end (unless it's already the last tick).
+  if (ticks[ticks.length - 1] !== maxMs) ticks.push(maxMs);
+  // De-dup and sort just in case.
+  return [...new Set(ticks)].sort((a,b) => a - b);
 }
 // ── END PROFIT CHART ──────────────────────────────────────────
 
