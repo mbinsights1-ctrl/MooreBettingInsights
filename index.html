@@ -1026,7 +1026,7 @@ function fmtUnits(u) {
 }
 function fmtROI(r) {
   const sign = r >= 0 ? '+' : '';
-  return `${sign}${r.toFixed(1)}%`;
+  return `${sign}${r.toFixed(2)}%`;
 }
 function unitClass(u) { return u >= 0 ? 'val-green' : 'val-red'; }
 function roiClass(r)  { return r >= 0 ? 'val-green' : 'val-red'; }
@@ -1059,22 +1059,21 @@ function renderMatrixCell(data) {
 }
 
 function renderPeriodCard(label, s, colorClass) {
-  const recClass = s.wins > s.losses ? 'val-green' : s.losses > s.wins ? 'val-red' : 'val-blue';
+  // Record stays in the default text color (matching the hero "Record" card)
+  // — coloring it green/red was misleading because a losing record can still
+  // have positive profit, and vice versa. Profit and ROI carry the win/loss
+  // signal already.
   return `<div class="period-card ${colorClass}">
     <div class="period-label">${label}</div>
-    <div class="period-record ${recClass}">${s.wins}-${s.losses}${s.pushes > 0 ? '-'+s.pushes : ''}</div>
+    <div class="period-record">${s.wins}-${s.losses}${s.pushes > 0 ? '-'+s.pushes : ''}</div>
     <div class="period-stats">
       <div>
-        <div class="period-stat-label">Units</div>
+        <div class="period-stat-label">Profit</div>
         <div class="period-stat ${unitClass(s.units)}">${fmtUnits(s.units)}</div>
       </div>
       <div>
         <div class="period-stat-label">ROI</div>
         <div class="period-stat ${roiClass(s.roi)}">${fmtROI(s.roi)}</div>
-      </div>
-      <div>
-        <div class="period-stat-label">Win%</div>
-        <div class="period-stat val-blue">${s.winPct.toFixed(1)}%</div>
       </div>
     </div>
   </div>`;
@@ -1112,8 +1111,8 @@ function renderDashboard(stats) {
       <div class="hero-sub">${stats.winPct.toFixed(1)}% win rate</div>
     </div>
     <div class="hero-card hc-blue">
-      <div class="hero-label">Units</div>
-      <div class="hero-value ${unitClass(stats.units)}">${unitsSign}${stats.units.toFixed(2)}</div>
+      <div class="hero-label">Profit</div>
+      <div class="hero-value ${unitClass(stats.units)}">${unitsSign}${stats.units.toFixed(2)}u</div>
       <div class="hero-sub">${stats.total} total picks</div>
     </div>
     <div class="hero-card hc-gold">
@@ -1203,8 +1202,8 @@ function renderDashboard(stats) {
         </div>
         <div class="chart-preset-btns">
           <button class="chart-preset-btn" data-preset="7">7D</button>
+          <button class="chart-preset-btn" data-preset="15">15D</button>
           <button class="chart-preset-btn" data-preset="30">30D</button>
-          <button class="chart-preset-btn" data-preset="90">90D</button>
           <button class="chart-preset-btn active" data-preset="all">All</button>
         </div>
       </div>
@@ -1693,12 +1692,12 @@ function renderChart() {
     const profitSign = windowProfit >= 0 ? '+' : '';
     const roiClass = windowROI >= 0 ? 'val-green' : 'val-red';
     const roiSign = windowROI >= 0 ? '+' : '';
-    const recordClass = windowWins > windowLosses ? 'val-green' : windowLosses > windowWins ? 'val-red' : 'val-blue';
+    // Record stays white — see renderPeriodCard for rationale.
     const recordStr = `${windowWins}-${windowLosses}${windowPushes > 0 ? '-'+windowPushes : ''}`;
     summary.innerHTML = `
       <div class="chart-summary-item">
         <span class="chart-summary-label">Record</span>
-        <span class="chart-summary-val ${recordClass}">${recordStr}</span>
+        <span class="chart-summary-val">${recordStr}</span>
       </div>
       <div class="chart-summary-item">
         <span class="chart-summary-label">Profit</span>
@@ -1706,7 +1705,7 @@ function renderChart() {
       </div>
       <div class="chart-summary-item">
         <span class="chart-summary-label">ROI</span>
-        <span class="chart-summary-val ${roiClass}">${roiSign}${windowROI.toFixed(1)}%</span>
+        <span class="chart-summary-val ${roiClass}">${roiSign}${windowROI.toFixed(2)}%</span>
       </div>
     `;
   }
@@ -1714,7 +1713,7 @@ function renderChart() {
   // ── Build SVG ──
   // We use a fixed viewBox and let the SVG scale responsively via width:100%.
   const VB_W = 800, VB_H = 280;
-  const M = { top: 16, right: 18, bottom: 36, left: 52 };
+  const M = { top: 16, right: 18, bottom: 18, left: 52 };
   const innerW = VB_W - M.left - M.right;
   const innerH = VB_H - M.top - M.bottom;
 
@@ -1736,12 +1735,6 @@ function renderChart() {
 
   // Y ticks — 5 evenly-spaced "nice" values
   const yTicks = niceTicks(yLo, yHi, 5);
-  // X ticks — pick a "nice" date interval (1, 2, 3, 5, 7, 14, or 30 days, or
-  // monthly) so labels land on round dates the user can locate at a glance.
-  // Targeting ~5–7 ticks total. The ticks themselves are placed at calendar
-  // boundaries that fall *inside* the window, then we add the start/end as
-  // bookends so the chart edges are always labeled.
-  const xTicks = niceDateTicks(xMin, xMax, 6);
 
   // Build line path
   const linePath = points.map((p, i) => `${i === 0 ? 'M' : 'L'}${xScale(p.dateMs).toFixed(2)},${yScale(p.cumulative).toFixed(2)}`).join(' ');
@@ -1776,16 +1769,24 @@ function renderChart() {
   // Line itself
   svg += `<path d="${linePath}" class="chart-line"/>`;
 
-  // X-axis line + tick marks + tick labels. Each tick gets a small vertical
-  // mark on the axis itself plus a centered date label below it so it's
-  // visually obvious which point on the chart each label corresponds to.
-  svg += `<line class="chart-axis-line" x1="${M.left}" x2="${M.left + innerW}" y1="${M.top + innerH}" y2="${M.top + innerH}"/>`;
-  xTicks.forEach((t) => {
-    const x = xScale(t).toFixed(2);
-    const yAxis = M.top + innerH;
+  // X-axis line + per-day tick marks. We draw a small vertical mark for each
+  // calendar day in the window — no text labels, since dates were too cramped
+  // to read at most window sizes. The slider labels and the date inputs (or
+  // tooltip hover, on mobile) cover the "what date am I looking at" need.
+  const yAxis = M.top + innerH;
+  svg += `<line class="chart-axis-line" x1="${M.left}" x2="${M.left + innerW}" y1="${yAxis}" y2="${yAxis}"/>`;
+  const DAY_MS = 86400000;
+  // Iterate over every calendar day in [xMin, xMax]. For very wide ranges
+  // (say 6+ months) we'd thin these out, but for a season's worth of data
+  // every-day ticks render cleanly.
+  const totalDays = Math.round((xMax - xMin) / DAY_MS);
+  // If the window has 200+ days, ticks get noisy — thin to every other day.
+  const tickStride = totalDays > 200 ? 2 : 1;
+  for (let i = 0; i <= totalDays; i += tickStride) {
+    const ms = xMin + i * DAY_MS;
+    const x = xScale(ms).toFixed(2);
     svg += `<line class="chart-axis-line" x1="${x}" x2="${x}" y1="${yAxis}" y2="${yAxis + 4}"/>`;
-    svg += `<text class="chart-axis-label" x="${x}" y="${yAxis + 18}" text-anchor="middle">${fmtDateShort(new Date(t))}</text>`;
-  });
+  }
 
   // Hover overlay group (line + dots get drawn last so they sit on top).
   // We draw circles for every data point but make them transparent unless hovered.
@@ -1865,61 +1866,6 @@ function niceTicks(lo, hi, targetCount) {
   const ticks = [];
   for (let v = start; v <= hi + 1e-9; v += step) ticks.push(parseFloat(v.toFixed(6)));
   return ticks;
-}
-
-// Generate "nice" date ticks that fall on round calendar boundaries inside
-// [minMs, maxMs]. We pick a step (in days, or monthly) that yields around
-// targetCount labels, then snap to multiples of that step from a sensible
-// anchor (start of month for monthly, or just every Nth day from minMs for
-// daily). The window edges (minMs, maxMs) are always included as bookends
-// so the chart's left/right boundaries are always labeled.
-function niceDateTicks(minMs, maxMs, targetCount) {
-  const DAY = 86400000;
-  const spanDays = Math.max(1, Math.round((maxMs - minMs) / DAY));
-  // Candidate step intervals in days. "month" is handled specially below.
-  const candidates = [1, 2, 3, 5, 7, 14, 'month', 60, 90];
-  // Pick the candidate that produces a tick count closest to targetCount.
-  let bestStep = 1;
-  let bestDiff = Infinity;
-  for (const c of candidates) {
-    const stepDays = c === 'month' ? 30 : c;
-    const count = Math.floor(spanDays / stepDays) + 1;
-    const diff = Math.abs(count - targetCount);
-    if (diff < bestDiff || (diff === bestDiff && count >= 2)) {
-      bestDiff = diff;
-      bestStep = c;
-    }
-  }
-  const ticks = [];
-  // Always include the window start.
-  ticks.push(minMs);
-  if (bestStep === 'month') {
-    // First-of-month ticks strictly inside the window (we don't double-count
-    // the bookends).
-    const start = new Date(minMs);
-    let cursor = new Date(start.getFullYear(), start.getMonth() + 1, 1).getTime();
-    while (cursor <= maxMs) {
-      if (cursor - minMs > DAY * 2 && maxMs - cursor > DAY * 2) ticks.push(cursor);
-      const d = new Date(cursor);
-      cursor = new Date(d.getFullYear(), d.getMonth() + 1, 1).getTime();
-    }
-  } else {
-    // Every Nth day starting one full step in from the window's left edge,
-    // so the first interior tick has breathing room from the start label.
-    const stepMs = bestStep * DAY;
-    let cursor = minMs + stepMs;
-    while (cursor < maxMs) {
-      // Skip ticks that would crowd the start or end labels.
-      if (cursor - minMs > stepMs * 0.5 && maxMs - cursor > stepMs * 0.5) {
-        ticks.push(cursor);
-      }
-      cursor += stepMs;
-    }
-  }
-  // Always include the window end (unless it's already the last tick).
-  if (ticks[ticks.length - 1] !== maxMs) ticks.push(maxMs);
-  // De-dup and sort just in case.
-  return [...new Set(ticks)].sort((a,b) => a - b);
 }
 // ── END PROFIT CHART ──────────────────────────────────────────
 
