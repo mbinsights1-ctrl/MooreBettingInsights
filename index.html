@@ -1108,7 +1108,7 @@ function renderMatrixCell(data) {
   const uCls  = data.units >= 0 ? 'val-green' : 'val-red';
   const rSign = roi >= 0 ? '+' : '';
   const rCls  = roi >= 0 ? 'val-green' : 'val-red';
-  const record = `${data.wins}-${data.losses}${data.pushes > 0 ? `-${data.pushes}` : ''}`;
+  const record = `${data.wins}-${data.losses}`;
   return `<td>
     <div class="matrix-cell">
       <span class="mc-record">${record}</span>
@@ -1125,7 +1125,7 @@ function renderPeriodCard(label, s, colorClass) {
   // signal already.
   return `<div class="period-card ${colorClass}">
     <div class="period-label">${label}</div>
-    <div class="period-record">${s.wins}-${s.losses}${s.pushes > 0 ? '-'+s.pushes : ''}</div>
+    <div class="period-record">${s.wins}-${s.losses}</div>
     <div class="period-stats">
       <div>
         <div class="period-stat-label">Profit</div>
@@ -1149,7 +1149,7 @@ function renderCompactMatrixStat(label, data) {
   const uCls  = data.units >= 0 ? 'val-green' : 'val-red';
   const rSign = roi >= 0 ? '+' : '';
   const rCls  = roi >= 0 ? 'val-green' : 'val-red';
-  const record = `${data.wins}-${data.losses}${data.pushes > 0 ? `-${data.pushes}` : ''}`;
+  const record = `${data.wins}-${data.losses}`;
   return `<div class="compact-stat">
     <span class="compact-stat-label">${label}</span>
     <span class="mc-record">${record}</span>
@@ -1167,13 +1167,13 @@ function renderDashboard(stats) {
   html += `<div class="hero-grid">
     <div class="hero-card hc-green">
       <div class="hero-label">Record</div>
-      <div class="hero-value">${stats.wins}-${stats.losses}${stats.pushes > 0 ? '-'+stats.pushes : ''}</div>
+      <div class="hero-value">${stats.wins}-${stats.losses}</div>
       <div class="hero-sub">${stats.winPct.toFixed(1)}% win rate</div>
     </div>
     <div class="hero-card hc-blue">
       <div class="hero-label">Profit</div>
       <div class="hero-value ${unitClass(stats.units)}">${unitsSign}${stats.units.toFixed(2)}u</div>
-      <div class="hero-sub">${stats.total} total picks</div>
+      <div class="hero-sub">${stats.wins + stats.losses} total picks</div>
     </div>
     <div class="hero-card hc-gold">
       <div class="hero-label">ROI</div>
@@ -1308,7 +1308,13 @@ function renderDashboard(stats) {
     const profit = parseFloat(p['Profit']);
     const profitStr = isNaN(profit) ? '-' : (profit >= 0 ? '+'+profit.toFixed(2) : profit.toFixed(2));
     const resultClass = result==='W' ? 'result-w' : result==='L' ? 'result-l' : '';
-    const profitClass = profit >= 0 ? 'profit-pos' : 'profit-neg';
+    const isPush = result === 'P';
+    const profitDisplay = isPush
+      ? `<span style="color:var(--muted);">—</span>`
+      : `<span class="${profitClass}">${profitStr}u</span>`;
+    const resultDisplay = isPush
+      ? `<span style="color:var(--muted);">—</span>`
+      : `<span class="${resultClass}">${result}</span>`;
     const mktPill  = market==='total' ? 'pill-teal' : market==='spread' ? 'pill-blue' : market==='moneyline' ? 'pill-purple' : 'pill-gray';
     html += `<tr>
       <td style="font-family:'DM Mono',monospace;font-size:12px;color:var(--muted);white-space:nowrap;">${shortDate}</td>
@@ -1317,8 +1323,8 @@ function renderDashboard(stats) {
       <td><span class="pill ${mktPill}" style="font-size:10px;">${market}</span></td>
       <td style="font-size:12px;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${pick}">${pick}</td>
       <td class="r" style="font-family:'DM Mono',monospace;font-size:12px;">${odds}</td>
-      <td class="c ${resultClass}" style="font-family:'DM Mono',monospace;font-weight:600;">${result}</td>
-      <td class="r ${profitClass}">${profitStr}u</td>
+      <td class="c" style="font-family:'DM Mono',monospace;font-weight:600;">${resultDisplay}</td>
+      <td class="r">${profitDisplay}</td>
     </tr>`;
   });
 
@@ -1337,7 +1343,13 @@ function renderDashboard(stats) {
     const profit = parseFloat(p['Profit']);
     const profitStr = isNaN(profit) ? '-' : (profit >= 0 ? '+'+profit.toFixed(2) : profit.toFixed(2));
     const resultClass = result==='W' ? 'result-w' : result==='L' ? 'result-l' : '';
-    const profitClass = profit >= 0 ? 'profit-pos' : 'profit-neg';
+    const isPush = result === 'P';
+    const profitDisplay = isPush
+      ? `<span style="color:var(--muted);">—</span>`
+      : `<span class="${profitClass}">${profitStr}u</span>`;
+    const resultDisplay = isPush
+      ? `<span style="color:var(--muted);">—</span>`
+      : `<span class="${resultClass}">${result}</span>`;
     const sportPill = sport==='NBA' ? 'pill-blue' : sport==='NCAAB' ? 'pill-gold' : 'pill-green';
     const mktPill  = market==='total' ? 'pill-teal' : market==='spread' ? 'pill-blue' : market==='moneyline' ? 'pill-purple' : 'pill-gray';
     html += `<div class="mobile-pick-card">
@@ -1353,9 +1365,9 @@ function renderDashboard(stats) {
       <div class="mobile-pick-bottom">
         <div class="mobile-pick-bottom-left">
           <span>${odds}</span>
-          <span class="${resultClass}">${result}</span>
+          ${resultDisplay}
         </div>
-        <div class="${profitClass}">${profitStr}u</div>
+        ${profitDisplay}
       </div>
     </div>`;
   });
