@@ -440,6 +440,30 @@ td.game-cell{max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:
   td.game-cell{max-width:120px;}
 
   .footer-refresh{font-size:10px;}
+
+  /* ── Mobile record-wrap fixes ── */
+  /* Hero stat cards: tighten record string so it stays on one line */
+  .hero-value{
+    font-size:16px;
+    letter-spacing:-0.04em;
+    line-height:1;
+    word-break:keep-all;
+    white-space:nowrap;
+  }
+  /* Profit & ROI hero cards stay a touch larger since they don't wrap */
+  .hero-card:not(:first-child) .hero-value{
+    font-size:18px;
+    letter-spacing:-0.02em;
+  }
+
+  /* Period cards (Last 7 / 15 / 30 days) */
+  .period-record{
+    font-size:14px;
+    letter-spacing:-0.04em;
+    line-height:1.1;
+    word-break:keep-all;
+    white-space:nowrap;
+  }
 }
 
 
