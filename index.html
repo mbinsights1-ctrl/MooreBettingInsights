@@ -1308,12 +1308,13 @@ function renderDashboard(stats) {
     const profit = parseFloat(p['Profit']);
     const profitStr = isNaN(profit) ? '-' : (profit >= 0 ? '+'+profit.toFixed(2) : profit.toFixed(2));
     const resultClass = result==='W' ? 'result-w' : result==='L' ? 'result-l' : '';
+    const profitClass = profit >= 0 ? 'profit-pos' : 'profit-neg';
     const isPush = result === 'P';
     const profitDisplay = isPush
       ? `<span style="color:var(--muted);">—</span>`
       : `<span class="${profitClass}">${profitStr}u</span>`;
     const resultDisplay = isPush
-      ? `<span style="color:var(--muted);">—</span>`
+      ? `<span style="color:var(--muted);">P</span>`
       : `<span class="${resultClass}">${result}</span>`;
     const mktPill  = market==='total' ? 'pill-teal' : market==='spread' ? 'pill-blue' : market==='moneyline' ? 'pill-purple' : 'pill-gray';
     html += `<tr>
@@ -1343,12 +1344,13 @@ function renderDashboard(stats) {
     const profit = parseFloat(p['Profit']);
     const profitStr = isNaN(profit) ? '-' : (profit >= 0 ? '+'+profit.toFixed(2) : profit.toFixed(2));
     const resultClass = result==='W' ? 'result-w' : result==='L' ? 'result-l' : '';
+    const profitClass = profit >= 0 ? 'profit-pos' : 'profit-neg';
     const isPush = result === 'P';
     const profitDisplay = isPush
       ? `<span style="color:var(--muted);">—</span>`
       : `<span class="${profitClass}">${profitStr}u</span>`;
     const resultDisplay = isPush
-      ? `<span style="color:var(--muted);">—</span>`
+      ? `<span style="color:var(--muted);">P</span>`
       : `<span class="${resultClass}">${result}</span>`;
     const sportPill = sport==='NBA' ? 'pill-blue' : sport==='NCAAB' ? 'pill-gold' : 'pill-green';
     const mktPill  = market==='total' ? 'pill-teal' : market==='spread' ? 'pill-blue' : market==='moneyline' ? 'pill-purple' : 'pill-gray';
