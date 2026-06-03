@@ -295,6 +295,17 @@ td.game-cell{max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:
 /* FOOTER */
 .footer{text-align:center;margin-top:52px;padding-top:20px;border-top:1px solid rgba(30,40,96,0.4);}
 .footer-refresh{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.06em;}
+.footer-social{margin-top:10px;}
+.footer-social a{
+  display:inline-flex;align-items:center;gap:6px;
+  font-family:'DM Mono',monospace;font-size:11px;letter-spacing:0.08em;
+  color:var(--dim);text-decoration:none;
+  padding:6px 14px;border-radius:8px;
+  border:1px solid rgba(80,150,255,0.18);
+  transition:all 0.25s ease;
+}
+.footer-social a:hover{border-color:rgba(80,150,255,0.4);color:var(--strong);}
+.footer-social svg{width:13px;height:13px;fill:currentColor;}
 
 /* ANIMATIONS */
 @keyframes fadeDown{from{opacity:0;transform:translateY(-16px);}to{opacity:1;transform:translateY(0);}}
@@ -388,6 +399,8 @@ td.game-cell{max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:
   td.game-cell{max-width:150px;}
 
   .footer{margin-top:36px;padding-top:16px;}
+  .footer-social a{padding:11px 20px;font-size:12px;}
+  .footer-social svg{width:15px;height:15px;}
 }
 
 @media (max-width: 640px){
@@ -873,6 +886,12 @@ td.game-cell{max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:
 <!-- FOOTER -->
 <div class="footer">
 <div class="footer-refresh" id="lastUpdate"></div>
+<div class="footer-social">
+<a href="https://x.com/MooreInsights" target="_blank" rel="noopener noreferrer" aria-label="Follow Moore Betting Insights on X">
+<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+<span>@MooreInsights</span>
+</a>
+</div>
 </div>
 </div>
 <script>
